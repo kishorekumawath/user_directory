@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:shimmer/shimmer.dart';
 
 import 'package:user_directory/controllers/user_controllers.dart';
-import '../widgets/user_card.dart';
+import '../widgets/user_card.dart'; // Assuming UserCard is adapted for grid items
 
 class UserListScreen extends StatefulWidget {
   const UserListScreen({super.key});
@@ -21,16 +21,14 @@ class _UserListScreenState extends State<UserListScreen>
   late Animation<double> _fabAnimation;
 
   final TextEditingController _searchController = TextEditingController();
-  final FocusNode _searchFocusNode = FocusNode(); // ✅ Add FocusNode
+  final FocusNode _searchFocusNode = FocusNode();
 
-  // ✅ Get controller instance once to avoid rebuilds
   late final UserController userController;
 
   @override
   void initState() {
     super.initState();
 
-    // ✅ Initialize controller once
     userController = Get.put(UserController());
 
     _searchAnimationController = AnimationController(
@@ -67,12 +65,15 @@ class _UserListScreenState extends State<UserListScreen>
     _searchAnimationController.dispose();
     _fabAnimationController.dispose();
     _searchController.dispose();
-    _searchFocusNode.dispose(); // ✅ Dispose FocusNode
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    // Determine if it's a large screen
+    final isLargeScreen = MediaQuery.of(context).size.width > 1024; // You can adjust this threshold
+
     return Scaffold(
       backgroundColor: Colors.blue[50],
       appBar: AppBar(
@@ -105,36 +106,57 @@ class _UserListScreenState extends State<UserListScreen>
         onTap: () => FocusScope.of(context).unfocus(),
         child: Column(
           children: [
-            // ✅ Search Bar - Wrapped in separate widget to prevent rebuilds
             _buildSearchBar(),
-
-            // User List
             Expanded(
               child: Obx(() {
                 if (userController.isLoading.value) {
-                  return ListView.builder(
-                    padding: const EdgeInsets.only(top: 8, bottom: 64),
-                    itemCount: 6, // Number of skeletons
-                    itemBuilder: (context, index) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        child: Shimmer.fromColors(
-                          baseColor: Colors.blue.shade100,
-                          highlightColor: Colors.blue.shade100.withValues(alpha: 0.5),
-                          child: Container(
-                            height: 100,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                  // Shimmer effect for both list and grid
+                  return isLargeScreen
+                      ? GridView.builder(
+                          padding: const EdgeInsets.only(top: 8, bottom: 64, left: 16, right: 16),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2, // Adjust as needed for larger screens
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                            childAspectRatio: 3 / 2, // Adjust aspect ratio for grid items
                           ),
-                        ),
-                      );
-                    },
-                  );
+                          itemCount: 8, // More skeletons for grid
+                          itemBuilder: (context, index) {
+                            return Shimmer.fromColors(
+                              baseColor: Colors.blue.shade100,
+                              highlightColor: Colors.blue.shade100.withAlpha(128), // Adjust alpha for highlight
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            );
+                          },
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.only(top: 8, bottom: 64),
+                          itemCount: 6,
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              child: Shimmer.fromColors(
+                                baseColor: Colors.blue.shade100,
+                                highlightColor: Colors.blue.shade100.withAlpha(128),
+                                child: Container(
+                                  height: 100,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        );
                 }
 
                 if (userController.errorMessage.value.isNotEmpty) {
@@ -178,25 +200,52 @@ class _UserListScreenState extends State<UserListScreen>
                 return RefreshIndicator(
                   onRefresh: userController.refreshUsers,
                   child: AnimationLimiter(
-                    child: ListView.builder(
-                      padding: const EdgeInsets.only(top: 8, bottom: 64),
-                      itemCount: userController.filteredUsers.length,
-                      itemBuilder: (context, index) {
-                        return AnimationConfiguration.staggeredList(
-                          position: index,
-                          duration: const Duration(milliseconds: 500),
-                          child: SlideAnimation(
-                            verticalOffset: 50.0,
-                            child: FadeInAnimation(
-                              child: UserCard(
-                                user: userController.filteredUsers[index],
-                                index: index,
-                              ),
+                    child: isLargeScreen
+                        ? GridView.builder(
+                            padding: const EdgeInsets.only(top: 8, bottom: 64, left: 16, right: 16),
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2, // Two columns for large screens
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                              childAspectRatio: 4, // Adjust as needed
                             ),
+                            itemCount: userController.filteredUsers.length,
+                            itemBuilder: (context, index) {
+                              return AnimationConfiguration.staggeredGrid(
+                                position: index,
+                                columnCount: 2, // Must match crossAxisCount
+                                duration: const Duration(milliseconds: 500),
+                                child: ScaleAnimation(
+                                  scale: 0.5, // Initial scale for grid items
+                                  child: FadeInAnimation(
+                                    child: UserCard(
+                                      user: userController.filteredUsers[index],
+                                      index: index,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.only(top: 8, bottom: 64),
+                            itemCount: userController.filteredUsers.length,
+                            itemBuilder: (context, index) {
+                              return AnimationConfiguration.staggeredList(
+                                position: index,
+                                duration: const Duration(milliseconds: 500),
+                                child: SlideAnimation(
+                                  verticalOffset: 50.0,
+                                  child: FadeInAnimation(
+                                    child: UserCard(
+                                      user: userController.filteredUsers[index],
+                                      index: index,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
                   ),
                 );
               }),
@@ -225,19 +274,17 @@ class _UserListScreenState extends State<UserListScreen>
     );
   }
 
-  // ✅ Separate search bar widget with proper animation handling
   Widget _buildSearchBar() {
     return AnimatedBuilder(
       animation: _searchAnimation,
       builder: (context, child) {
         return Transform.scale(
           scale: _searchAnimation.value,
-          child: child, // ✅ Use child parameter to prevent TextField rebuilds
+          child: child,
         );
       },
       child: Container(
-        // ✅ Move TextField to child parameter
-        padding: const EdgeInsets.only(left: 16,right: 16, top: 16),
+        padding: const EdgeInsets.only(left: 16, right: 16, top: 16),
         child: TextField(
           controller: _searchController,
           focusNode: _searchFocusNode,
@@ -250,13 +297,13 @@ class _UserListScreenState extends State<UserListScreen>
             suffixIcon: Obx(() {
               return userController.searchQuery.value.isNotEmpty
                   ? IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: () {
-                      _searchController.clear();
-                      userController.updateSearchQuery('');
-                      _searchFocusNode.unfocus();
-                    },
-                  )
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _searchController.clear();
+                        userController.updateSearchQuery('');
+                        _searchFocusNode.unfocus();
+                      },
+                    )
                   : const SizedBox.shrink();
             }),
             filled: true,

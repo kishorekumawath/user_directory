@@ -25,6 +25,8 @@ class UserCard extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // User Avatar
               Hero(
@@ -88,6 +90,7 @@ class UserCard extends StatelessWidget {
               // User Info
               Expanded(
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Name
@@ -186,6 +189,7 @@ class UserCard extends StatelessWidget {
 
               // Action Button
               Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   IconButton(
                     onPressed: () {
