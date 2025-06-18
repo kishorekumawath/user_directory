@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:get/get.dart';
+import 'package:shimmer/shimmer.dart';
 
 import 'package:user_directory/controllers/user_controllers.dart';
 import '../widgets/user_card.dart';
@@ -80,17 +81,11 @@ class _UserListScreenState extends State<UserListScreen>
           tween: Tween(begin: -100.0, end: 0.0),
           curve: Curves.elasticOut,
           builder: (context, value, child) {
-            return Transform.translate(
-              offset: Offset(value, 0),
-              child: child,
-            );
+            return Transform.translate(offset: Offset(value, 0), child: child);
           },
           child: const Text(
             'EyeQlytics User Directory',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
           ),
         ),
         backgroundColor: Colors.blue[700],
@@ -100,10 +95,7 @@ class _UserListScreenState extends State<UserListScreen>
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                Colors.blue[700]!,
-                Colors.blue[500]!,
-              ],
+              colors: [Colors.blue[700]!, Colors.blue[500]!],
             ),
           ),
         ),
@@ -115,12 +107,34 @@ class _UserListScreenState extends State<UserListScreen>
           children: [
             // ✅ Search Bar - Wrapped in separate widget to prevent rebuilds
             _buildSearchBar(),
-            
+
             // User List
             Expanded(
               child: Obx(() {
                 if (userController.isLoading.value) {
-                  return const Center(child: CircularProgressIndicator());
+                  return ListView.builder(
+                    padding: const EdgeInsets.only(top: 8, bottom: 64),
+                    itemCount: 6, // Number of skeletons
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        child: Shimmer.fromColors(
+                          baseColor: Colors.blue.shade100,
+                          highlightColor: Colors.blue.shade100.withValues(alpha: 0.5),
+                          child: Container(
+                            height: 100,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  );
                 }
 
                 if (userController.errorMessage.value.isNotEmpty) {
@@ -128,12 +142,19 @@ class _UserListScreenState extends State<UserListScreen>
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                        const Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: Colors.red,
+                        ),
                         const SizedBox(height: 16),
                         Text(
                           userController.errorMessage.value,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.red, fontSize: 16),
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 16,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton(
@@ -214,8 +235,9 @@ class _UserListScreenState extends State<UserListScreen>
           child: child, // ✅ Use child parameter to prevent TextField rebuilds
         );
       },
-      child: Container( // ✅ Move TextField to child parameter
-        padding: const EdgeInsets.all(16),
+      child: Container(
+        // ✅ Move TextField to child parameter
+        padding: const EdgeInsets.only(left: 16,right: 16, top: 16),
         child: TextField(
           controller: _searchController,
           focusNode: _searchFocusNode,
@@ -228,13 +250,13 @@ class _UserListScreenState extends State<UserListScreen>
             suffixIcon: Obx(() {
               return userController.searchQuery.value.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        _searchController.clear();
-                        userController.updateSearchQuery('');
-                        _searchFocusNode.unfocus();
-                      },
-                    )
+                    icon: const Icon(Icons.clear),
+                    onPressed: () {
+                      _searchController.clear();
+                      userController.updateSearchQuery('');
+                      _searchFocusNode.unfocus();
+                    },
+                  )
                   : const SizedBox.shrink();
             }),
             filled: true,
