@@ -1,4 +1,4 @@
-# 👤 EyeQlytics User Directory
+# 👤 EyeQlytics User Directory Assignment 
 
 A simple Flutter app that displays a directory of users fetched from a public API. Built for the EyeQlytics internship task to demonstrate skills in Flutter, API integration, state management, and UI design.
 
@@ -24,7 +24,7 @@ A simple Flutter app that displays a directory of users fetched from a public AP
 
 ---------------------------------------------------------------------------
 ## 📸 Demo
-mobile : https://drive.google.com/file/d/1NkCds5b1vsLtzbYevQ4_rw8MEcEYy9jN/view?usp=sharing
+mobile : https://drive.google.com/file/d/1NkCds5b1vsLtzbYevQ4_rw8MEcEYy9jN/view?usp=sharing \n
 web : https://drive.google.com/file/d/1Wz8w51jG6xsvswTfFavDi07rL6c9tWkD/view?usp=sharing
 
 ## 🚀 Getting Started
