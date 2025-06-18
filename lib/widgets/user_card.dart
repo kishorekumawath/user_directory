@@ -1,289 +1,300 @@
 import 'package:flutter/material.dart';
 import '../models/user_model.dart';
 
-class UserCard extends StatefulWidget {
+class UserCard extends StatelessWidget {
   final UserModel user;
   final int index;
 
-  const UserCard({
-    super.key,
-    required this.user,
-    this.index = 0,
-  });
-
-  @override
-  State<UserCard> createState() => _UserCardState();
-}
-
-class _UserCardState extends State<UserCard>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _fadeAnimation;
-  bool _isHovered = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.05,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
-
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
-
-    // Delayed entrance animation
-    Future.delayed(Duration(milliseconds: widget.index * 100), () {
-      if (mounted) {
-        _animationController.forward();
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
+  const UserCard({super.key, required this.user, required this.index});
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animationController,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _isHovered ? _scaleAnimation.value : 1.0,
-          child: Opacity(
-            opacity: _fadeAnimation.value,
-            child: MouseRegion(
-              onEnter: (_) => setState(() => _isHovered = true),
-              onExit: (_) => setState(() => _isHovered = false),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeInOut,
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _isHovered 
-                          ? Colors.blue.withOpacity(0.3)
-                          : Colors.black.withOpacity(0.1),
-                      blurRadius: _isHovered ? 20 : 8,
-                      offset: Offset(0, _isHovered ? 8 : 4),
-                    ),
-                  ],
-                ),
-                child: Card(
-                  elevation: 0,
-                  margin: EdgeInsets.zero,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Colors.white,
-                          Colors.blue.withOpacity(0.05),
-                        ],
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Colors.white, Colors.grey.shade50],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              // User Avatar
+              Hero(
+                tag: 'user_avatar_${user.login.uuid}',
+                child: Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.blue.shade200, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.blue.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        // Animated Avatar
-                        Hero(
-                          tag: 'avatar_${widget.user.id}',
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.blue.withOpacity(0.3),
-                                  blurRadius: _isHovered ? 15 : 5,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: CircleAvatar(
-                              radius: _isHovered ? 35 : 30,
-                              backgroundImage: NetworkImage(widget.user.avatar),
-                              backgroundColor: Colors.grey[300],
+                    ],
+                  ),
+                  child: ClipOval(
+                    child: Image.network(
+                      user.picture.medium,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: Colors.grey.shade200,
+                          child: Icon(
+                            Icons.person,
+                            size: 30,
+                            color: Colors.grey.shade600,
+                          ),
+                        );
+                      },
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          color: Colors.grey.shade200,
+                          child: Center(
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.blue,
+                                value:
+                                    loadingProgress.expectedTotalBytes != null
+                                        ? loadingProgress
+                                                .cumulativeBytesLoaded /
+                                            loadingProgress.expectedTotalBytes!
+                                        : null,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 20),
-                        // User details with slide animation
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              TweenAnimationBuilder<double>(
-                                duration: Duration(milliseconds: 400 + widget.index * 50),
-                                tween: Tween(begin: -50.0, end: 0.0),
-                                builder: (context, value, child) {
-                                  return Transform.translate(
-                                    offset: Offset(value, 0),
-                                    child: child,
-                                  );
-                                },
-                                child: Text(
-                                  widget.user.fullName,
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              TweenAnimationBuilder<double>(
-                                duration: Duration(milliseconds: 500 + widget.index * 50),
-                                tween: Tween(begin: -50.0, end: 0.0),
-                                builder: (context, value, child) {
-                                  return Transform.translate(
-                                    offset: Offset(value, 0),
-                                    child: child,
-                                  );
-                                },
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.email,
-                                      size: 16,
-                                      color: Colors.grey[600],
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Expanded(
-                                      child: Text(
-                                        widget.user.email,
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.grey[600],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              TweenAnimationBuilder<double>(
-                                duration: Duration(milliseconds: 600 + widget.index * 50),
-                                tween: Tween(begin: -50.0, end: 0.0),
-                                builder: (context, value, child) {
-                                  return Transform.translate(
-                                    offset: Offset(value, 0),
-                                    child: child,
-                                  );
-                                },
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 300),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        Colors.blue[100]!,
-                                        Colors.blue[50]!,
-                                      ],
-                                    ),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: Colors.blue[200]!,
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    'ID: ${widget.user.id}',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.blue[800],
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        // Animated action button
-                        TweenAnimationBuilder<double>(
-                          duration: const Duration(milliseconds: 300),
-                          tween: Tween(begin: 0.0, end: _isHovered ? 1.0 : 0.0),
-                          builder: (context, value, child) {
-                            return Transform.scale(
-                              scale: 0.8 + (0.2 * value),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                decoration: BoxDecoration(
-                                  color: _isHovered 
-                                      ? Colors.blue[500] 
-                                      : Colors.grey[200],
-                                  shape: BoxShape.circle,
-                                ),
-                                child: IconButton(
-                                  onPressed: () {
-                                    // Add ripple effect
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Row(
-                                          children: [
-                                            CircleAvatar(
-                                              radius: 15,
-                                              backgroundImage: NetworkImage(widget.user.avatar),
-                                            ),
-                                            const SizedBox(width: 12),
-                                            Text('Viewing ${widget.user.fullName}'),
-                                          ],
-                                        ),
-                                        behavior: SnackBarBehavior.floating,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        duration: const Duration(seconds: 2),
-                                      ),
-                                    );
-                                  },
-                                  icon: Icon(
-                                    Icons.arrow_forward_ios,
-                                    color: _isHovered ? Colors.white : Colors.grey[600],
-                                    size: 18,
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
+                        );
+                      },
                     ),
                   ),
                 ),
               ),
+              const SizedBox(width: 16),
+
+              // User Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Name
+                    Text(
+                      user.displayName,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+
+                    // Email
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.email_outlined,
+                          size: 16,
+                          color: Colors.blue.shade600,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            user.email,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade700,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+
+                    // Location
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on_outlined,
+                          size: 16,
+                          color: Colors.orange.shade600,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            '${user.location.city}, ${user.location.country}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+
+                    // Age and Gender
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color:
+                                user.gender == 'male'
+                                    ? Colors.blue.shade100
+                                    : Colors.pink.shade100,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${user.dob.age} years • ${user.gender.toUpperCase()}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color:
+                                  user.gender == 'male'
+                                      ? Colors.blue.shade700
+                                      : Colors.pink.shade700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // Action Button
+              Column(
+                children: [
+                  IconButton(
+                    onPressed: () {
+                      // Handle phone call
+                      _showContactOptions(context);
+                    },
+                    icon: Icon(Icons.phone, color: Colors.green.shade600),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.green.shade50,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    user.nat,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showContactOptions(BuildContext context) {
+    showModalBottomSheet(
+      backgroundColor: Colors.blue[50],
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder:
+          (context) => Container(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.blue,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Contact ${user.name.first}',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ListTile(
+                  tileColor: Colors.white,
+                  leading: Icon(Icons.phone, color: Colors.green.shade600),
+                  title: Text(user.phone),
+                  shape: RoundedRectangleBorder(
+                    side: BorderSide(color: Colors.grey.shade300, width: 1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  subtitle: const Text('Phone'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Implement phone call functionality
+                  },
+                ),
+                SizedBox(height: 10),
+                ListTile(
+                   tileColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    side: BorderSide(color: Colors.grey.shade300, width: 1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  leading: Icon(Icons.smartphone, color: Colors.blue.shade600),
+                  title: Text(user.cell),
+                  subtitle: const Text('Mobile'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Implement mobile call functionality
+                  },
+                ),
+                SizedBox(height: 10), 
+                ListTile(
+                   tileColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    side: BorderSide(color: Colors.grey.shade300, width: 1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  leading: Icon(Icons.email, color: Colors.orange.shade600),
+                  title: Text(user.email),
+                  subtitle: const Text('Email'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Implement email functionality
+                  },
+                ),
+              ],
             ),
           ),
-        );
-      },
     );
   }
 }
